@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Благотворительный фонд</title>
+</head>
+<body>
+
+    <h2>Сделать пожертвование</h2>
+
+    <!-- ФОРМА СБОРА ДАННЫХ -->
+    <form id="donationForm">
+        <label>ФИО:</label><br>
+        <input type="text" id="fio" required><br><br>
+
+        <label>Email:</label><br>
+        <input type="email" id="email" required><br><br>
+
+        <label>Телефон:</label><br>
+        <input type="tel" id="phone" required><br><br>
+
+        <label>Комментарий:</label><br>
+        <textarea id="comment"></textarea><br><br>
+
+        <!-- ЧЕКБОКС ЕЖЕМЕСЯЧНОГО ПЛАТЕЖА -->
+        <label>
+            <input type="checkbox" id="isRecurrent"> Сделать платеж ежемесячным
+        </label><br><br>
+
+        <!-- ПОЛЕ ДЛЯ СУММЫ (нужно для виджета) -->
+        <label>Сумма (руб.):</label><br>
+        <input type="number" id="amount" value="100" min="1"><br><br>
+
+        <!-- КНОПКА ОПЛАТЫ -->
+        <button type="button" onclick="startPayment()">Оплатить</button>
+    </form>
+
+    <!-- ПОДКЛЮЧАЕМ СКРИПТ ВИДЖЕТА CLOUDPAYMENTS -->
+    <script src="https://widget.cloudpayments.ru/bundles/cloudpayments"></script>
+
+    <script>
+        function startPayment() {
+            // Получаем данные из формы
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const fio = document.getElementById('fio').value;
+            const comment = document.getElementById('comment').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const isRecurrent = document.getElementById('isRecurrent').checked;
+
+            // Проверка, что сумма указана корректно
+            if (!amount || amount <= 0) {
+                alert('Укажите корректную сумму');
+                return;
+            }
+
+            // Базовая конфигурация виджета
+            const widgetOptions = {
+                publicId: 'pk_3523a43ecc0884c0a8f70cfd3a584', // Ваш Public ID
+                description: 'Пожертвование в фонд',
+                amount: amount,
+                currency: 'RUB',
+                email: email,
+                phone: phone,
+                accountId: email, // Идентификатор плательщика (обычно email)
+
+                // Передаём данные формы в виджет (они попадут в чек и ЛК)
+                data: {
+                    ФИО: fio,
+                    Комментарий: comment
+                }
+            };
+
+            // Если чекбокс включён — добавляем настройки рекуррентного платежа
+            if (isRecurrent) {
+                widgetOptions.recurrent = {
+                    interval: 'Month',   // Интервал списания: месяц
+                    period: 1            // Периодичность: каждый 1 месяц
+                };
+            }
+
+            // Создаём и запускаем виджет
+            const widget = new cp.CloudPayments();
+            widget.pay('charge', widgetOptions, {
+                onSuccess: function (options) {
+                    alert('Платеж успешно проведён!');
+                },
+                onFail: function (reason, options) {
+                    alert('Платеж не прошёл: ' + reason);
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
